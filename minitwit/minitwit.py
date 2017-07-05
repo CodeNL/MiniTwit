@@ -59,7 +59,7 @@ def robohash(username, size=80):
 
 @app.before_request
 def before_request():
-    g.current_user = None
+    g.current_user_id = None
     if 'user_id' in session and session['user_id'] in all_users:
         g.current_user = all_users[session['user_id']]
         g.current_user_id = session['user_id']
@@ -71,7 +71,7 @@ def timeline():
     redirect to the public timeline.  This timeline shows the user's
     messages as well as all the messages of followed users.
     """
-    if not g.current_user:
+    if not g.current_user_id:
         return redirect(url_for('public_timeline'))
     messages = []
     for message in all_messages:
@@ -93,7 +93,7 @@ def user_timeline(username):
     if whom_id is None:
         abort(404)
     followed = False
-    if g.current_user and whom_id in all_users[g.current_user_id]['following']:
+    if g.current_user_id and whom_id in all_users[g.current_user_id]['following']:
         followed = True
     messages = []
     for message in all_messages:
@@ -106,7 +106,7 @@ def user_timeline(username):
 @app.route('/<username>/follow')
 def follow_user(username):
     """Adds the current user as follower of the given user."""
-    if not g.current_user:
+    if not g.current_user_id:
         abort(401)
     whom_id = get_user_id(username)
     if whom_id is None:
@@ -119,7 +119,7 @@ def follow_user(username):
 @app.route('/<username>/unfollow')
 def unfollow_user(username):
     """Removes the current user as follower of the given user."""
-    if not g.current_user:
+    if not g.current_user_id:
         abort(401)
     whom_id = get_user_id(username)
     if whom_id is None:
@@ -132,14 +132,14 @@ def unfollow_user(username):
 @app.route('/add_message', methods=['POST'])
 def add_message():
     """Registers a new message for the user."""
-    if not g.current_user:
+    if not g.current_user_id:
         abort(401)
     if request.form['text']:
         all_messages.insert(0, {
             'author_id': g.current_user_id,
             'text': request.form['text'],
             'pub_date': int(time.time()),
-            'username': g.current_user['username']
+            'username': all_users[g.current_user_id]['username']
         })
         flash('Your message was recorded')
     return redirect(url_for('timeline'))
@@ -148,7 +148,7 @@ def add_message():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Logs the user in."""
-    if g.current_user:
+    if g.current_user_id:
         return redirect(url_for('timeline'))
     error = None
     if request.method == 'POST':
@@ -171,7 +171,7 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """Registers the user."""
-    if g.current_user:
+    if g.current_user_id:
         return redirect(url_for('timeline'))
     error = None
     if request.method == 'POST':
