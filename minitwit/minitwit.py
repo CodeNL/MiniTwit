@@ -50,7 +50,7 @@ def timeline():
     for message in all_messages:
         if message['author'] == g.current_username or message['author'] in all_users[g.current_username]['following']:
             messages.append(message)
-    return render_template('timeline.html', messages=messages)
+    return render_template('my_timeline.html', messages=messages)
 
 
 @app.route('/public')
