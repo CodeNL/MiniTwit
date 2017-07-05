@@ -27,17 +27,14 @@ def client():
     os.unlink(minitwit.app.config['DATABASE'])
 
 
-def register(client, username, password, password2=None, email=None):
+def register(client, username, password, password2=None):
     """Helper function to register a user"""
     if password2 is None:
         password2 = password
-    if email is None:
-        email = username + '@example.com'
     return client.post('/register', data={
         'username':     username,
         'password':     password,
         'password2':    password2,
-        'email':        email,
     }, follow_redirects=True)
 
 
@@ -82,8 +79,6 @@ def test_register(client):
     assert b'You have to enter a password' in rv.data
     rv = register(client, 'meh', 'x', 'y')
     assert b'The two passwords do not match' in rv.data
-    rv = register(client, 'meh', 'foo', email='broken')
-    assert b'You have to enter a valid email address' in rv.data
 
 
 def test_login_logout(client):

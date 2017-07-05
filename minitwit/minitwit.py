@@ -53,7 +53,6 @@ def add_user_info(messages):
         user = all_users[message['author_id']]
         message_with_user_info = message.copy()
         message_with_user_info['username'] = user['username']
-        message_with_user_info['email'] = user['email']
         messages_with_user_info.append(message_with_user_info)
     return messages_with_user_info
 
@@ -63,10 +62,10 @@ def format_datetime(timestamp):
     return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d @ %H:%M')
 
 
-def robohash(email, size=80):
-    """Return the Robohash image for the given email."""
+def robohash(username, size=80):
+    """Return the Robohash image for the given username."""
     return 'https://robohash.org/%s.png?size=%dx%d' % \
-        (email, size, size)
+        (username, size, size)
 
 
 @app.before_request
@@ -191,9 +190,6 @@ def register():
     if request.method == 'POST':
         if not request.form['username']:
             error = 'You have to enter a username'
-        elif not request.form['email'] or \
-                '@' not in request.form['email']:
-            error = 'You have to enter a valid email address'
         elif not request.form['password']:
             error = 'You have to enter a password'
         elif request.form['password'] != request.form['password2']:
@@ -204,7 +200,6 @@ def register():
             user_id = get_next_user_id()
             all_users[user_id] = {
                 'username': request.form['username'],
-                'email': request.form['email'],
                 'pw_hash': generate_password_hash(request.form['password']),
                 'following': []
             }
