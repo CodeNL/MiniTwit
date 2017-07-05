@@ -45,16 +45,6 @@ def get_user_id(username):
             return user_id
     return None
 
-def add_user_info(messages):
-    """Adds user information to messages."""
-    messages_with_user_info = []
-    for message in messages:
-        user = all_users[message['author_id']]
-        message_with_user_info = message.copy()
-        message_with_user_info['username'] = user['username']
-        messages_with_user_info.append(message_with_user_info)
-    return messages_with_user_info
-
 
 def format_datetime(timestamp):
     """Format a timestamp for display."""
@@ -87,13 +77,13 @@ def timeline():
     for message in all_messages:
         if message['author_id'] == g.current_user_id or message['author_id'] in all_users[g.current_user_id]['following']:
             messages.append(message)
-    return render_template('timeline.html', messages=add_user_info(messages))
+    return render_template('timeline.html', messages=messages)
 
 
 @app.route('/public')
 def public_timeline():
     """Displays the latest messages of all users."""
-    return render_template('public_timeline.html', messages=add_user_info(all_messages))
+    return render_template('public_timeline.html', messages=all_messages)
 
 
 @app.route('/<username>')
@@ -109,7 +99,7 @@ def user_timeline(username):
     for message in all_messages:
         if message['author_id'] == whom_id:
             messages.append(message)
-    return render_template('user_timeline.html', messages=add_user_info(messages), followed=followed,
+    return render_template('user_timeline.html', messages=messages, followed=followed,
             profile_user=all_users[whom_id])
 
 
@@ -148,7 +138,8 @@ def add_message():
         all_messages.insert(0, {
             'author_id': g.current_user_id,
             'text': request.form['text'],
-            'pub_date': int(time.time())
+            'pub_date': int(time.time()),
+            'username': g.current_user['username']
         })
         flash('Your message was recorded')
     return redirect(url_for('timeline'))
