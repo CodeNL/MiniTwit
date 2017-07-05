@@ -1,16 +1,9 @@
 {% extends "layout.html" %}
 {% block title %}
-  My Timeline
+  Public Timeline
 {% endblock %}
 {% block body %}
   <h2>{{ self.title() }}</h2>
-    <div class="twitbox">
-      <h3>What's on your mind {{ g.user.username }}?</h3>
-      <form action="{{ url_for('add_message') }}" method="post">
-        <p><input type="text" name="text" size="60"><!--
-        --><input type="submit" value="Share">
-      </form>
-    </div>
   <ul class="messages">
   {% for message in messages %}
     <li><img src="{{ message.username|robohash(size=80) }}"><p>

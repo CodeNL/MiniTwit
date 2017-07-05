@@ -95,7 +95,7 @@ def timeline():
 @app.route('/public')
 def public_timeline():
     """Displays the latest messages of all users."""
-    return render_template('timeline.html', messages=add_user_info(all_messages[:PER_PAGE]))
+    return render_template('public_timeline.html', messages=add_user_info(all_messages[:PER_PAGE]))
 
 
 @app.route('/<username>')
@@ -113,7 +113,7 @@ def user_timeline(username):
             messages.append(message)
             if len(messages) >= PER_PAGE:
                 break
-    return render_template('timeline.html', messages=add_user_info(messages), followed=followed,
+    return render_template('user_timeline.html', messages=add_user_info(messages), followed=followed,
             profile_user=all_users[whom_id])
 
 
