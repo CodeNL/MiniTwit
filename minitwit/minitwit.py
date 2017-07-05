@@ -17,7 +17,6 @@ from werkzeug import check_password_hash, generate_password_hash
 
 
 # configuration
-PER_PAGE = 30
 DEBUG = True
 SECRET_KEY = b'_5#y2L"F4Q8z\n\xec]/'
 
@@ -88,15 +87,13 @@ def timeline():
     for message in all_messages:
         if message['author_id'] == g.current_user_id or message['author_id'] in all_users[g.current_user_id]['following']:
             messages.append(message)
-            if len(messages) >= PER_PAGE:
-                break
     return render_template('timeline.html', messages=add_user_info(messages))
 
 
 @app.route('/public')
 def public_timeline():
     """Displays the latest messages of all users."""
-    return render_template('public_timeline.html', messages=add_user_info(all_messages[:PER_PAGE]))
+    return render_template('public_timeline.html', messages=add_user_info(all_messages))
 
 
 @app.route('/<username>')
@@ -112,8 +109,6 @@ def user_timeline(username):
     for message in all_messages:
         if message['author_id'] == whom_id:
             messages.append(message)
-            if len(messages) >= PER_PAGE:
-                break
     return render_template('user_timeline.html', messages=add_user_info(messages), followed=followed,
             profile_user=all_users[whom_id])
 
