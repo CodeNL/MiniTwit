@@ -7,11 +7,11 @@
   <ul class="messages">
   {% for message in messages %}
     <li>
-      <img src="{{ message.username|robohash(size=80) }}">
+      <img src="{{ message.author|robohash(size=80) }}">
       <p>
         <strong>
-          <a href="{{ url_for('user_timeline', username=message.username)}}">
-            {{ message.username }}
+          <a href="{{ url_for('user_timeline', username=message.author)}}">
+            {{ message.author }}
           </a>
         </strong>
         {{ message.text }}

@@ -1,21 +1,21 @@
 {% extends "layout.html" %}
 {% block title %}
-  {{ profile_user.username }}'s Timeline
+  {{ profile_username }}'s Timeline
 {% endblock %}
 {% block body %}
   <h2>{{ self.title() }}</h2>
-  {% if g.current_user %}
+  {% if g.current_username %}
     <div class="followstatus">
-    {% if g.current_user.username == profile_user.username %}
+    {% if g.current_username == profile_username %}
       This is you!
     {% elif followed %}
       You are currently following this user.
-      <a class="unfollow" href="{{ url_for('unfollow_user', username=profile_user.username)}}">
+      <a class="unfollow" href="{{ url_for('unfollow_user', username=profile_username)}}">
         Unfollow user
       </a>.
     {% else %}
       You are not yet following this user.
-      <a class="follow" href="{{ url_for('follow_user', username=profile_user.username)}}">
+      <a class="follow" href="{{ url_for('follow_user', username=profile_username)}}">
         Follow user
       </a>.
     {% endif %}
@@ -24,11 +24,11 @@
   <ul class="messages">
   {% for message in messages %}
     <li>
-      <img src="{{ message.username|robohash(size=80) }}">
+      <img src="{{ message.author|robohash(size=80) }}">
       <p>
         <strong>
-          <a href="{{ url_for('user_timeline', username=message.username)}}">
-            {{ message.username }}
+          <a href="{{ url_for('user_timeline', username=message.author)}}">
+            {{ message.author }}
           </a>
         </strong>
         {{ message.text }}

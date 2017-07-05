@@ -5,7 +5,7 @@
 {% block body %}
   <h2>{{ self.title() }}</h2>
     <div class="twitbox">
-      <h3>What's on your mind {{ g.current_user.username }}?</h3>
+      <h3>What's on your mind {{ g.current_username }}?</h3>
       <form action="{{ url_for('add_message') }}" method="post">
         <p>
           <input type="text" name="text" size="60"><!--
@@ -16,11 +16,11 @@
   <ul class="messages">
   {% for message in messages %}
     <li>
-      <img src="{{ message.username|robohash(size=80) }}">
+      <img src="{{ message.author|robohash(size=80) }}">
       <p>
         <strong>
-          <a href="{{ url_for('user_timeline', username=message.username)}}">
-            {{ message.username }}
+          <a href="{{ url_for('user_timeline', username=message.author)}}">
+            {{ message.author }}
           </a>
         </strong>
         {{ message.text }}
