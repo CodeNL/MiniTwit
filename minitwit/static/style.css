@@ -176,3 +176,7 @@ div.error {
     padding: 4px;
     font-size: 13px;
 }
+
+span.mention-highlight {
+    background-color: #6ECCC4;
+}

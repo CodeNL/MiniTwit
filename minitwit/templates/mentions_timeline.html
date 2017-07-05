@@ -14,7 +14,13 @@
             {{ message.author }}
           </a>
         </strong>
-        {{ message.text }}
+        {% for text_chunk in message.text_chunks %}
+          {% if loop.first %}
+            {{ text_chunk }}
+          {% else %}
+            <span class="mention-highlight">{{ mention }}</span>{{ text_chunk }}
+          {% endif %}
+        {% endfor %}
         <small>
           &mdash; {{ message.pub_date|datetimeformat }}
         </small>

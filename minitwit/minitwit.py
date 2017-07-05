@@ -81,11 +81,14 @@ def mentions_timeline():
     """
     if not g.current_username:
         return redirect(url_for('public_timeline'))
-    messages = []
+    mention = '@{}'.format(g.current_username)
+    highlighted_messages = []
     for message in db['all_messages']:
-        if '@' + g.current_username in message['text']:
-            messages.append(message)
-    return render_template('mentions_timeline.html', messages=messages)
+        if mention in message['text']:
+            highlighted_message = message.copy()
+            highlighted_message['text_chunks'] = message['text'].split(mention)
+            highlighted_messages.append(highlighted_message)
+    return render_template('mentions_timeline.html', messages=highlighted_messages, mention=mention)
 
 
 @app.route('/public')
