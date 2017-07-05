@@ -70,9 +70,10 @@ def robohash(username, size=80):
 
 @app.before_request
 def before_request():
-    g.user = None
+    g.current_user = None
     if 'user_id' in session and session['user_id'] in all_users:
-        g.user = all_users[session['user_id']]
+        g.current_user = all_users[session['user_id']]
+        g.current_user_id = session['user_id']
 
 
 @app.route('/')
@@ -81,11 +82,11 @@ def timeline():
     redirect to the public timeline.  This timeline shows the user's
     messages as well as all the messages of followed users.
     """
-    if not g.user:
+    if not g.current_user:
         return redirect(url_for('public_timeline'))
     messages = []
     for message in all_messages:
-        if message['author_id'] == session['user_id'] or message['author_id'] in all_users[session['user_id']]['following']:
+        if message['author_id'] == g.current_user_id or message['author_id'] in all_users[g.current_user_id]['following']:
             messages.append(message)
             if len(messages) >= PER_PAGE:
                 break
@@ -105,7 +106,7 @@ def user_timeline(username):
     if whom_id is None:
         abort(404)
     followed = False
-    if g.user and whom_id in all_users[session['user_id']]['following']:
+    if g.current_user and whom_id in all_users[g.current_user_id]['following']:
         followed = True
     messages = []
     for message in all_messages:
@@ -120,12 +121,12 @@ def user_timeline(username):
 @app.route('/<username>/follow')
 def follow_user(username):
     """Adds the current user as follower of the given user."""
-    if not g.user:
+    if not g.current_user:
         abort(401)
     whom_id = get_user_id(username)
     if whom_id is None:
         abort(404)
-    all_users[session['user_id']]['following'].append(whom_id)
+    all_users[g.current_user_id]['following'].append(whom_id)
     flash('You are now following "%s"' % username)
     return redirect(url_for('user_timeline', username=username))
 
@@ -133,12 +134,12 @@ def follow_user(username):
 @app.route('/<username>/unfollow')
 def unfollow_user(username):
     """Removes the current user as follower of the given user."""
-    if not g.user:
+    if not g.current_user:
         abort(401)
     whom_id = get_user_id(username)
     if whom_id is None:
         abort(404)
-    all_users[session['user_id']]['following'].remove(whom_id)
+    all_users[g.current_user_id]['following'].remove(whom_id)
     flash('You are no longer following "%s"' % username)
     return redirect(url_for('user_timeline', username=username))
 
@@ -150,7 +151,7 @@ def add_message():
         abort(401)
     if request.form['text']:
         all_messages.insert(0, {
-            'author_id': session['user_id'],
+            'author_id': g.current_user_id,
             'text': request.form['text'],
             'pub_date': int(time.time())
         })
@@ -161,7 +162,7 @@ def add_message():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     """Logs the user in."""
-    if g.user:
+    if g.current_user:
         return redirect(url_for('timeline'))
     error = None
     if request.method == 'POST':
@@ -184,7 +185,7 @@ def login():
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     """Registers the user."""
-    if g.user:
+    if g.current_user:
         return redirect(url_for('timeline'))
     error = None
     if request.method == 'POST':

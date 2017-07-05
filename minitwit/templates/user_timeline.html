@@ -4,9 +4,9 @@
 {% endblock %}
 {% block body %}
   <h2>{{ self.title() }}</h2>
-  {% if g.user %}
+  {% if g.current_user %}
     <div class="followstatus">
-    {% if g.user.username == profile_user.username %}
+    {% if g.current_user.username == profile_user.username %}
       This is you!
     {% elif followed %}
       You are currently following this user.
