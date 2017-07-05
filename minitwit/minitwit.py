@@ -16,15 +16,12 @@ from flask import Flask, request, session, url_for, redirect, \
 from werkzeug import check_password_hash, generate_password_hash
 
 
-# configuration
-DEBUG = True
-SECRET_KEY = b'_5#y2L"F4Q8z\n\xec]/'
-
-
 # create our little application :)
 app = Flask('minitwit')
-app.config.from_object(__name__)
-app.config.from_envvar('MINITWIT_SETTINGS', silent=True)
+
+# configuration
+app.config['DEBUG'] = True
+app.config['SECRET_KEY'] = b'_5#y2L"F4R8z\n\xec]/'
 
 
 # initialize data
