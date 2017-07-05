@@ -20,29 +20,22 @@ from werkzeug import check_password_hash, generate_password_hash
 DEBUG = True
 SECRET_KEY = b'_5#y2L"F4Q8z\n\xec]/'
 
+
 # create our little application :)
 app = Flask('minitwit')
 app.config.from_object(__name__)
 app.config.from_envvar('MINITWIT_SETTINGS', silent=True)
+
 
 # initialize data
 all_users = {}
 all_messages = []
 
 
-def format_datetime(timestamp):
-    """Format a timestamp for display."""
-    return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d @ %H:%M')
-
-
-def robohash(username, size=80):
-    """Return the Robohash image for the given username."""
-    return 'https://robohash.org/%s.png?size=%dx%d' % \
-        (username, size, size)
-
-
+# this runs before every request
 @app.before_request
-def before_request():
+def check_if_logged_in():
+    """Checks which user is logged in, if any."""
     g.current_username = None
     if 'username' in session and session['username'] in all_users:
         g.current_username = session['username']
@@ -176,6 +169,17 @@ def logout():
     flash('You were logged out')
     session.pop('username', None)
     return redirect(url_for('public_timeline'))
+
+# Helper functions
+def format_datetime(timestamp):
+    """Format a timestamp for display."""
+    return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d @ %H:%M')
+
+
+def robohash(username, size=80):
+    """Return the Robohash image for the given username."""
+    return 'https://robohash.org/%s.png?size=%dx%d' % \
+        (username, size, size)
 
 
 # add some filters to jinja
