@@ -107,7 +107,7 @@ div.page ul.messages li {
     border: 1px solid #DBF3F1;
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
-    min-height: 48px;
+    min-height: 80px;
 }
 
 div.page ul.messages p {
