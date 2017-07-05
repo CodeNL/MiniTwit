@@ -3,23 +3,21 @@
     MiniTwit
     ~~~~~~~~
 
-    A microblogging application written with Flask and sqlite3.
+    A microblogging application written with Flask
 
     :copyright: (c) 2015 by Armin Ronacher.
     :license: BSD, see LICENSE for more details.
 """
 
 import time
-from sqlite3 import dbapi2 as sqlite3
 from hashlib import md5
 from datetime import datetime
 from flask import Flask, request, session, url_for, redirect, \
-     render_template, abort, g, flash, _app_ctx_stack
+     render_template, abort, g, flash
 from werkzeug import check_password_hash, generate_password_hash
 
 
 # configuration
-DATABASE = '/tmp/minitwit.db'
 PER_PAGE = 30
 DEBUG = True
 SECRET_KEY = b'_5#y2L"F4Q8z\n\xec]/'
@@ -29,53 +27,36 @@ app = Flask('minitwit')
 app.config.from_object(__name__)
 app.config.from_envvar('MINITWIT_SETTINGS', silent=True)
 
+# initialize data
+all_users = {}
+all_messages = []
 
-def get_db():
-    """Opens a new database connection if there is none yet for the
-    current application context.
-    """
-    top = _app_ctx_stack.top
-    if not hasattr(top, 'sqlite_db'):
-        top.sqlite_db = sqlite3.connect(app.config['DATABASE'])
-        top.sqlite_db.row_factory = sqlite3.Row
-    return top.sqlite_db
+def get_next_user_id():
+    """Generate new user id."""
+    max_id = 0
 
-
-@app.teardown_appcontext
-def close_database(exception):
-    """Closes the database again at the end of the request."""
-    top = _app_ctx_stack.top
-    if hasattr(top, 'sqlite_db'):
-        top.sqlite_db.close()
-
-
-def init_db():
-    """Initializes the database."""
-    db = get_db()
-    with app.open_resource('schema.sql', mode='r') as f:
-        db.cursor().executescript(f.read())
-    db.commit()
-
-
-@app.cli.command('initdb')
-def initdb_command():
-    """Creates the database tables."""
-    init_db()
-    print('Initialized the database.')
-
-
-def query_db(query, args=(), one=False):
-    """Queries the database and returns a list of dictionaries."""
-    cur = get_db().execute(query, args)
-    rv = cur.fetchall()
-    return (rv[0] if rv else None) if one else rv
-
+    for user_id in all_users:
+        if int(user_id) > max_id:
+            max_id = int(user_id)
+    return str(max_id + 1)
 
 def get_user_id(username):
     """Convenience method to look up the id for a username."""
-    rv = query_db('select user_id from user where username = ?',
-                  [username], one=True)
-    return rv[0] if rv else None
+    for user_id, user in all_users.items():
+        if user['username'] == username:
+            return user_id
+    return None
+
+def add_user_info(messages):
+    """Adds user information to messages."""
+    messages_with_user_info = []
+    for message in messages:
+        user = all_users[message['author_id']]
+        message_with_user_info = message.copy()
+        message_with_user_info['username'] = user['username']
+        message_with_user_info['email'] = user['email']
+        messages_with_user_info.append(message_with_user_info)
+    return messages_with_user_info
 
 
 def format_datetime(timestamp):
@@ -92,9 +73,8 @@ def gravatar_url(email, size=80):
 @app.before_request
 def before_request():
     g.user = None
-    if 'user_id' in session:
-        g.user = query_db('select * from user where user_id = ?',
-                          [session['user_id']], one=True)
+    if 'user_id' in session and session['user_id'] in all_users:
+        g.user = all_users[session['user_id']]
 
 
 @app.route('/')
@@ -105,44 +85,38 @@ def timeline():
     """
     if not g.user:
         return redirect(url_for('public_timeline'))
-    return render_template('timeline.html', messages=query_db('''
-        select message.*, user.* from message, user
-        where message.author_id = user.user_id and (
-            user.user_id = ? or
-            user.user_id in (select whom_id from follower
-                                    where who_id = ?))
-        order by message.pub_date desc limit ?''',
-        [session['user_id'], session['user_id'], PER_PAGE]))
+    messages = []
+    for message in all_messages:
+        if message['author_id'] == session['user_id'] or message['author_id'] in all_users[session['user_id']]['following']:
+            messages.append(message)
+            if len(messages) >= PER_PAGE:
+                break
+    return render_template('timeline.html', messages=add_user_info(messages))
 
 
 @app.route('/public')
 def public_timeline():
     """Displays the latest messages of all users."""
-    return render_template('timeline.html', messages=query_db('''
-        select message.*, user.* from message, user
-        where message.author_id = user.user_id
-        order by message.pub_date desc limit ?''', [PER_PAGE]))
+    return render_template('timeline.html', messages=add_user_info(all_messages[:PER_PAGE]))
 
 
 @app.route('/<username>')
 def user_timeline(username):
     """Display's a users tweets."""
-    profile_user = query_db('select * from user where username = ?',
-                            [username], one=True)
-    if profile_user is None:
+    whom_id = get_user_id(username)
+    if whom_id is None:
         abort(404)
     followed = False
-    if g.user:
-        followed = query_db('''select 1 from follower where
-            follower.who_id = ? and follower.whom_id = ?''',
-            [session['user_id'], profile_user['user_id']],
-            one=True) is not None
-    return render_template('timeline.html', messages=query_db('''
-            select message.*, user.* from message, user where
-            user.user_id = message.author_id and user.user_id = ?
-            order by message.pub_date desc limit ?''',
-            [profile_user['user_id'], PER_PAGE]), followed=followed,
-            profile_user=profile_user)
+    if g.user and whom_id in all_users[session['user_id']]['following']:
+        followed = True
+    messages = []
+    for message in all_messages:
+        if message['author_id'] == whom_id:
+            messages.append(message)
+            if len(messages) >= PER_PAGE:
+                break
+    return render_template('timeline.html', messages=add_user_info(messages), followed=followed,
+            profile_user=all_users[whom_id])
 
 
 @app.route('/<username>/follow')
@@ -153,10 +127,7 @@ def follow_user(username):
     whom_id = get_user_id(username)
     if whom_id is None:
         abort(404)
-    db = get_db()
-    db.execute('insert into follower (who_id, whom_id) values (?, ?)',
-              [session['user_id'], whom_id])
-    db.commit()
+    all_users[session['user_id']]['following'].append(whom_id)
     flash('You are now following "%s"' % username)
     return redirect(url_for('user_timeline', username=username))
 
@@ -169,10 +140,7 @@ def unfollow_user(username):
     whom_id = get_user_id(username)
     if whom_id is None:
         abort(404)
-    db = get_db()
-    db.execute('delete from follower where who_id=? and whom_id=?',
-              [session['user_id'], whom_id])
-    db.commit()
+    all_users[session['user_id']]['following'].remove(whom_id)
     flash('You are no longer following "%s"' % username)
     return redirect(url_for('user_timeline', username=username))
 
@@ -183,11 +151,11 @@ def add_message():
     if 'user_id' not in session:
         abort(401)
     if request.form['text']:
-        db = get_db()
-        db.execute('''insert into message (author_id, text, pub_date)
-          values (?, ?, ?)''', (session['user_id'], request.form['text'],
-                                int(time.time())))
-        db.commit()
+        all_messages.insert(0, {
+            'author_id': session['user_id'],
+            'text': request.form['text'],
+            'pub_date': int(time.time())
+        })
         flash('Your message was recorded')
     return redirect(url_for('timeline'))
 
@@ -199,16 +167,18 @@ def login():
         return redirect(url_for('timeline'))
     error = None
     if request.method == 'POST':
-        user = query_db('''select * from user where
-            username = ?''', [request.form['username']], one=True)
-        if user is None:
+        current_user_id = None
+        for user_id, user in all_users.items():
+            if user['username'] == request.form['username']:
+                current_user_id = user_id
+        if current_user_id is None:
             error = 'Invalid username'
-        elif not check_password_hash(user['pw_hash'],
+        elif not check_password_hash(all_users[current_user_id]['pw_hash'],
                                      request.form['password']):
             error = 'Invalid password'
         else:
             flash('You were logged in')
-            session['user_id'] = user['user_id']
+            session['user_id'] = current_user_id
             return redirect(url_for('timeline'))
     return render_template('login.html', error=error)
 
@@ -232,12 +202,13 @@ def register():
         elif get_user_id(request.form['username']) is not None:
             error = 'The username is already taken'
         else:
-            db = get_db()
-            db.execute('''insert into user (
-              username, email, pw_hash) values (?, ?, ?)''',
-              [request.form['username'], request.form['email'],
-               generate_password_hash(request.form['password'])])
-            db.commit()
+            user_id = get_next_user_id()
+            all_users[user_id] = {
+                'username': request.form['username'],
+                'email': request.form['email'],
+                'pw_hash': generate_password_hash(request.form['password']),
+                'following': []
+            }
             flash('You were successfully registered and can login now')
             return redirect(url_for('login'))
     return render_template('register.html', error=error)

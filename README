@@ -6,7 +6,7 @@
 
     ~ What is MiniTwit?
 
-      A SQLite and Flask powered twitter clone
+      A Flask powered twitter clone
 
     ~ How do I use it?
 
@@ -22,11 +22,7 @@
 
          export FLASK_APP=minitwit
 
-      4. fire up a shell and run this:
-
-         flask initdb
-
-      5. now you can run minitwit:
+      4. now you can run minitwit:
 
          flask run
 
