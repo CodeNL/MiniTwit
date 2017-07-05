@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block title %}
+  My Mentions
+{% endblock %}
+{% block body %}
+  <h2>{{ self.title() }}</h2>
+  <ul class="messages">
+  {% for message in messages %}
+    <li>
+      <img src="{{ message.author|robohash(size=80) }}">
+      <p>
+        <strong>
+          <a href="{{ url_for('user_timeline', username=message.author)}}">
+            {{ message.author }}
+          </a>
+        </strong>
+        {{ message.text }}
+        <small>
+          &mdash; {{ message.pub_date|datetimeformat }}
+        </small>
+      </p>
+    </li>
+  {% else %}
+    <li>
+      <em>There's no message so far.</em>
+    </li>
+  {% endfor %}
+  </ul>
+{% endblock %}
