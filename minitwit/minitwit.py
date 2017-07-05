@@ -10,7 +10,6 @@
 """
 
 import time
-from hashlib import md5
 from datetime import datetime
 from flask import Flask, request, session, url_for, redirect, \
      render_template, abort, g, flash
@@ -64,10 +63,10 @@ def format_datetime(timestamp):
     return datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d @ %H:%M')
 
 
-def gravatar_url(email, size=80):
-    """Return the gravatar image for the given email address."""
-    return 'https://www.gravatar.com/avatar/%s?d=identicon&s=%d' % \
-        (md5(email.strip().lower().encode('utf-8')).hexdigest(), size)
+def robohash(email, size=80):
+    """Return the Robohash image for the given email."""
+    return 'https://robohash.org/%s.png?size=%dx%d' % \
+        (email, size, size)
 
 
 @app.before_request
@@ -224,4 +223,4 @@ def logout():
 
 # add some filters to jinja
 app.jinja_env.filters['datetimeformat'] = format_datetime
-app.jinja_env.filters['gravatar'] = gravatar_url
+app.jinja_env.filters['robohash'] = robohash
