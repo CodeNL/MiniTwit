@@ -62,7 +62,7 @@ def public_timeline():
 @app.route('/<username>')
 def user_timeline(username):
     """Display's a users tweets."""
-    if not username in all_users:
+    if username not in all_users:
         abort(404)
     followed = False
     if g.current_username and username in all_users[g.current_username]['following']:
@@ -80,7 +80,7 @@ def follow_user(username):
     """Adds the current user as follower of the given user."""
     if not g.current_username:
         abort(401)
-    if not username in all_users:
+    if username not in all_users:
         abort(404)
     all_users[g.current_username]['following'].append(username)
     flash('You are now following "%s"' % username)
@@ -92,7 +92,7 @@ def unfollow_user(username):
     """Removes the current user as follower of the given user."""
     if not g.current_username:
         abort(401)
-    if not username in all_users:
+    if username not in all_users:
         abort(404)
     all_users[g.current_username]['following'].remove(username)
     flash('You are no longer following "%s"' % username)
@@ -122,7 +122,7 @@ def login():
     error = None
     if request.method == 'POST':
         current_username = request.form['username']
-        if not current_username in all_users:
+        if current_username not in all_users:
             error = 'Invalid username'
         elif not check_password_hash(all_users[current_username]['pw_hash'],
                                      request.form['password']):
