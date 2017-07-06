@@ -118,7 +118,7 @@ def follow_user(username):
     if username not in db['all_users']:
         abort(404)
     db['all_users'][g.current_username]['following'].append(username)
-    flash('You are now following "%s"' % username)
+    flash('You are now following "{}"'.format(username))
     return redirect(url_for('user_timeline', username=username))
 
 
@@ -130,7 +130,7 @@ def unfollow_user(username):
     if username not in db['all_users']:
         abort(404)
     db['all_users'][g.current_username]['following'].remove(username)
-    flash('You are no longer following "%s"' % username)
+    flash('You are no longer following "{}"'.format(username))
     return redirect(url_for('user_timeline', username=username))
 
 
@@ -210,8 +210,7 @@ def format_datetime(timestamp):
 
 def robohash(username, size=80):
     """Return the Robohash image for the given username."""
-    return 'https://robohash.org/%s.png?size=%dx%d' % \
-        (username, size, size)
+    return 'https://robohash.org/{0}.png?size={1}x{1}'.format(username, size)
 
 
 # add some filters to jinja
