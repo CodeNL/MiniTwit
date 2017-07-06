@@ -85,14 +85,12 @@ def user_timeline(username):
     """Display's a users tweets."""
     if username not in db['all_users']:
         abort(404)
-    followed = False
-    if g.current_username and username in db['all_users'][g.current_username]['following']:
-        followed = True
-    messages = []
-    for message in db['all_messages']:
-        if message['author'] == username:
-            messages.append(message)
-    return render_template('user_timeline.html', messages=messages, followed=followed,
+
+    # TODO: Find out whether you are following this user
+
+    # TODO: Collect all messages from this user
+
+    return render_template('user_timeline.html', messages=[], followed=False,
             profile_username=username)
 
 
