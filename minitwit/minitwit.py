@@ -11,9 +11,11 @@
 
 import time
 from datetime import datetime
+from os import path
 from flask import Flask, request, session, url_for, redirect, \
      render_template, abort, g, flash
 from werkzeug import check_password_hash, generate_password_hash
+import pickle
 
 
 # create our little application :)
@@ -25,8 +27,18 @@ app.config['SECRET_KEY'] = b'_5#y2L"F4R8z\n\xec]/'
 
 
 # initialize data
-all_users = {}
-all_messages = []
+db = {
+    'all_users': {},
+    'all_messages': []
+}
+
+
+# load database (if it exists)
+db_filename = path.join(app.root_path, 'minitwit.db')
+
+if path.isfile(db_filename):
+    with open(db_filename, 'rb') as db_file:
+        db = pickle.load(db_file)
 
 
 # this runs before every request
@@ -34,8 +46,17 @@ all_messages = []
 def check_if_logged_in():
     """Checks which user is logged in, if any."""
     g.current_username = None
-    if 'username' in session and session['username'] in all_users:
+    if 'username' in session and session['username'] in db['all_users']:
         g.current_username = session['username']
+
+
+# this runs after every request
+@app.after_request
+def save_data(response):
+    """Saves the current data to a file."""
+    with open(db_filename, 'wb') as db_file:
+        pickle.dump(db, db_file, protocol=pickle.HIGHEST_PROTOCOL)
+    return response
 
 
 @app.route('/')
@@ -47,8 +68,8 @@ def timeline():
     if not g.current_username:
         return redirect(url_for('public_timeline'))
     messages = []
-    for message in all_messages:
-        if message['author'] == g.current_username or message['author'] in all_users[g.current_username]['following']:
+    for message in db['all_messages']:
+        if message['author'] == g.current_username or message['author'] in db['all_users'][g.current_username]['following']:
             messages.append(message)
     return render_template('my_timeline.html', messages=messages)
 
@@ -61,7 +82,7 @@ def mentions_timeline():
     if not g.current_username:
         return redirect(url_for('public_timeline'))
     messages = []
-    for message in all_messages:
+    for message in db['all_messages']:
         if '@' + g.current_username in message['text']:
             messages.append(message)
     return render_template('mentions_timeline.html', messages=messages)
@@ -70,19 +91,19 @@ def mentions_timeline():
 @app.route('/public')
 def public_timeline():
     """Displays the latest messages of all users."""
-    return render_template('public_timeline.html', messages=all_messages)
+    return render_template('public_timeline.html', messages=db['all_messages'])
 
 
 @app.route('/<username>')
 def user_timeline(username):
     """Display's a users tweets."""
-    if username not in all_users:
+    if username not in db['all_users']:
         abort(404)
     followed = False
-    if g.current_username and username in all_users[g.current_username]['following']:
+    if g.current_username and username in db['all_users'][g.current_username]['following']:
         followed = True
     messages = []
-    for message in all_messages:
+    for message in db['all_messages']:
         if message['author'] == username:
             messages.append(message)
     return render_template('user_timeline.html', messages=messages, followed=followed,
@@ -94,9 +115,9 @@ def follow_user(username):
     """Adds the current user as follower of the given user."""
     if not g.current_username:
         abort(401)
-    if username not in all_users:
+    if username not in db['all_users']:
         abort(404)
-    all_users[g.current_username]['following'].append(username)
+    db['all_users'][g.current_username]['following'].append(username)
     flash('You are now following "%s"' % username)
     return redirect(url_for('user_timeline', username=username))
 
@@ -106,9 +127,9 @@ def unfollow_user(username):
     """Removes the current user as follower of the given user."""
     if not g.current_username:
         abort(401)
-    if username not in all_users:
+    if username not in db['all_users']:
         abort(404)
-    all_users[g.current_username]['following'].remove(username)
+    db['all_users'][g.current_username]['following'].remove(username)
     flash('You are no longer following "%s"' % username)
     return redirect(url_for('user_timeline', username=username))
 
@@ -119,7 +140,7 @@ def add_message():
     if not g.current_username:
         abort(401)
     if request.form['text']:
-        all_messages.insert(0, {
+        db['all_messages'].insert(0, {
             'author': g.current_username,
             'text': request.form['text'],
             'pub_date': int(time.time()),
@@ -136,9 +157,9 @@ def login():
     error = None
     if request.method == 'POST':
         current_username = request.form['username']
-        if current_username not in all_users:
+        if current_username not in db['all_users']:
             error = 'Invalid username'
-        elif not check_password_hash(all_users[current_username]['pw_hash'],
+        elif not check_password_hash(db['all_users'][current_username]['pw_hash'],
                                      request.form['password']):
             error = 'Invalid password'
         else:
@@ -161,11 +182,11 @@ def register():
             error = 'You have to enter a password'
         elif request.form['password'] != request.form['password2']:
             error = 'The two passwords do not match'
-        elif request.form['username'] in all_users:
+        elif request.form['username'] in db['all_users']:
             error = 'The username is already taken'
         else:
             username = request.form['username']
-            all_users[username] = {
+            db['all_users'][username] = {
                 'pw_hash': generate_password_hash(request.form['password']),
                 'following': []
             }
