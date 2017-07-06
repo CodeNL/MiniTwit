@@ -8,26 +8,40 @@
       <h3>What's on your mind {{ g.current_username }}?</h3>
       <form action="{{ url_for('add_message') }}" method="post">
         <p>
-          <input type="text" name="text" size="60"><!--
-          --><input type="submit" value="Share">
+          <input type="text" name="text">
+        </p>
+        <p>
+          <label>
+            <span>Image URL:</span>
+            <em>(optional)</em>
+          </label>
+          <input type="url" name="image_url">
+          <input type="submit" value="Share">
         </p>
       </form>
     </div>
   <ul class="messages">
-  {% for message in messages %}
+    {% for message in messages %}
     <li>
-      <img src="{{ message.author|robohash(size=80) }}">
-      <p>
-        <strong>
-          <a href="{{ url_for('user_timeline', username=message.author)}}">
-            {{ message.author }}
-          </a>
-        </strong>
-        {{ message.text }}
-        <small>
-          &mdash; {{ message.pub_date|datetimeformat }}
-        </small>
-      </p>
+      <img class="avatar" src="{{ message.author|robohash(size=80) }}">
+      <div class="message-contents">
+        <div class="message-text">
+          <strong>
+            <a href="{{ url_for('user_timeline', username=message.author)}}">
+              {{ message.author }}
+            </a>
+          </strong>
+          {{ message.text }}
+          <small>
+            &mdash; {{ message.pub_date|datetimeformat }}
+          </small>
+        </div>
+        {% if message.image_url %}
+        <div class="message-image">
+          <img src="{{ message.image_url }}">
+        </div>
+        {% endif %}
+      </div>
     </li>
   {% else %}
     <li>

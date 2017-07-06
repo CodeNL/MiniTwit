@@ -144,6 +144,7 @@ def add_message():
             'author': g.current_username,
             'text': request.form['text'],
             'pub_date': int(time.time()),
+            'image_url': request.form['image_url']
         })
         flash('Your message was recorded')
     return redirect(url_for('timeline'))

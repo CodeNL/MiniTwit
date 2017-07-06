@@ -108,14 +108,34 @@ div.page ul.messages li {
     -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
     min-height: 80px;
+    display: table;
+    width: calc(100% - 12px);
 }
 
-div.page ul.messages p {
+div.page ul.messages li div.message-contents {
+    display: table-cell;
+    text-align: center;
+    vertical-align: top;
     margin: 0;
 }
 
-div.page ul.messages li img {
-    float: left;
+div.page ul.messages li div.message-text {
+    text-align: left;
+    margin: 0;
+}
+
+div.page ul.messages li div.message-image {
+    margin: 10px 0 0 0;
+}
+
+div.page ul.messages li div.message-image img {
+    max-height: 400px;
+    max-width: 100%;
+    margin: 0;
+}
+
+div.page ul.messages li img.avatar {
+    display: table-cell;
     padding: 0 10px 0 0;
 }
 
@@ -140,11 +160,15 @@ div.page div.twitbox h3 {
 }
 
 div.page div.twitbox p {
-    margin: 0;
+    margin: 10px 0;
 }
 
 div.page div.twitbox input[type="text"] {
-    width: 585px;
+    width: 662px;
+}
+
+div.page div.twitbox input[type="url"] {
+    width: 400px;
 }
 
 div.page div.twitbox input[type="submit"] {
