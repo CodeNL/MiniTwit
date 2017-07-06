@@ -74,20 +74,6 @@ def timeline():
     return render_template('my_timeline.html', messages=messages)
 
 
-@app.route('/mentions')
-def mentions_timeline():
-    """Shows a timeline of the users mentions. A mention is any
-    message that contains the users username.
-    """
-    if not g.current_username:
-        return redirect(url_for('public_timeline'))
-    messages = []
-    for message in db['all_messages']:
-        if '@' + g.current_username in message['text']:
-            messages.append(message)
-    return render_template('mentions_timeline.html', messages=messages)
-
-
 @app.route('/public')
 def public_timeline():
     """Displays the latest messages of all users."""
