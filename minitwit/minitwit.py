@@ -69,7 +69,7 @@ def timeline():
         return redirect(url_for('public_timeline'))
     messages = []
     for message in db['all_messages']:
-        if message['author'] == g.current_username or message['author'] in db['all_users'][g.current_username]['following']:
+        if message['author'] == g.current_username:
             messages.append(message)
     return render_template('my_timeline.html', messages=messages)
 
