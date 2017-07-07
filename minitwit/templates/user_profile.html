@@ -10,12 +10,12 @@
       This is you!
     {% elif followed %}
       You are currently following this user.
-      <a class="unfollow" href="{{ url_for('unfollow_user', username=profile_username)}}">
+      <a class="unfollow" href="{{ url_for('unfollow_user', profile_username=profile_username)}}">
         Unfollow user
       </a>.
     {% else %}
       You are not yet following this user.
-      <a class="follow" href="{{ url_for('follow_user', username=profile_username)}}">
+      <a class="follow" href="{{ url_for('follow_user', profile_username=profile_username)}}">
         Follow user
       </a>.
     {% endif %}
@@ -28,7 +28,7 @@
       <div class="message-contents">
         <div class="message-text">
           <strong>
-            <a href="{{ url_for('user_timeline', username=message.author)}}">
+            <a href="{{ url_for('user_profile', profile_username=message.author)}}">
               {{ message.author }}
             </a>
           </strong>

@@ -94,44 +94,44 @@ def public_timeline():
     return render_template('public_timeline.html', messages=db['all_messages'])
 
 
-@app.route('/<username>')
-def user_timeline(username):
+@app.route('/<profile_username>')
+def user_profile(profile_username):
     """Display's a users tweets."""
-    if username not in db['all_users']:
+    if profile_username not in db['all_users']:
         abort(404)
     followed = False
-    if g.current_username and username in db['all_users'][g.current_username]['following']:
+    if g.current_username and profile_username in db['all_users'][g.current_username]['following']:
         followed = True
     messages = []
     for message in db['all_messages']:
-        if message['author'] == username:
+        if message['author'] == profile_username:
             messages.append(message)
-    return render_template('user_timeline.html', messages=messages, followed=followed,
-            profile_username=username)
+    return render_template('user_profile.html', messages=messages, followed=followed,
+            profile_username=profile_username)
 
 
-@app.route('/<username>/follow')
-def follow_user(username):
+@app.route('/<profile_username>/follow')
+def follow_user(profile_username):
     """Adds the current user as follower of the given user."""
     if not g.current_username:
         abort(401)
-    if username not in db['all_users']:
+    if profile_username not in db['all_users']:
         abort(404)
-    db['all_users'][g.current_username]['following'].append(username)
-    flash('You are now following "{}"'.format(username))
-    return redirect(url_for('user_timeline', username=username))
+    db['all_users'][g.current_username]['following'].append(profile_username)
+    flash('You are now following "{}"'.format(profile_username))
+    return redirect(url_for('user_profile', profile_username=profile_username))
 
 
-@app.route('/<username>/unfollow')
-def unfollow_user(username):
+@app.route('/<profile_username>/unfollow')
+def unfollow_user(profile_username):
     """Removes the current user as follower of the given user."""
     if not g.current_username:
         abort(401)
-    if username not in db['all_users']:
+    if profile_username not in db['all_users']:
         abort(404)
-    db['all_users'][g.current_username]['following'].remove(username)
-    flash('You are no longer following "{}"'.format(username))
-    return redirect(url_for('user_timeline', username=username))
+    db['all_users'][g.current_username]['following'].remove(profile_username)
+    flash('You are no longer following "{}"'.format(profile_username))
+    return redirect(url_for('user_profile', profile_username=profile_username))
 
 
 @app.route('/add_message', methods=['POST'])

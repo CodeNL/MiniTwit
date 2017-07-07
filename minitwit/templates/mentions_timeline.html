@@ -11,7 +11,7 @@
       <div class="message-contents">
         <div class="message-text">
           <strong>
-            <a href="{{ url_for('user_timeline', username=message.author)}}">
+            <a href="{{ url_for('user_profile', profile_username=message.author)}}">
               {{ message.author }}
             </a>
           </strong>
